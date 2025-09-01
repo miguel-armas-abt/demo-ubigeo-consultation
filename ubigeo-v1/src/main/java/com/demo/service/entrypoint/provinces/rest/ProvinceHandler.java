@@ -26,14 +26,14 @@ public class ProvinceHandler {
   private final ParamValidator paramValidator;
 
   public Mono<ServerResponse> findByDepartmentId(ServerRequest serverRequest) {
-    Map<String, String> headers = RestServerUtils.extractHeadersAsMap(serverRequest);
+    Mono<ProvinceParam> paramsMono = paramValidator.validateQueryParamsAndGet(serverRequest, ProvinceParam.class).map(Map.Entry::getKey);
 
-
-    Mono<ProvinceParam> params = paramValidator.validateAndGet(RestServerUtils.extractQueryParamsAsMap(serverRequest), ProvinceParam.class);
-
-    Flux<ProvinceEntity> response = paramValidator.validateAndGet(headers, DefaultHeaders.class)
-        .zipWith(params)
-        .flatMapMany(tuple -> provinceService.findByDepartmentId(tuple.getT2().getDepartmentId()));
+    Flux<ProvinceEntity> response = paramValidator.validateHeadersAndGet(serverRequest, DefaultHeaders.class)
+        .zipWith(paramsMono)
+        .flatMapMany(tuple -> {
+          ProvinceParam params = tuple.getT2();
+          return provinceService.findByDepartmentId(params.getDepartmentId());
+        });
 
     return ServerResponse.ok()
         .headers(httpHeaders -> RestServerUtils.buildResponseHeaders(serverRequest.headers()).accept(httpHeaders))

@@ -26,13 +26,14 @@ public class DistrictHandler {
   private final ParamValidator paramValidator;
 
   public Mono<ServerResponse> findByProvinceIdAndDepartmentId(ServerRequest serverRequest) {
-    Map<String, String> headers = RestServerUtils.extractHeadersAsMap(serverRequest);
+    Mono<DistrictParam> paramsMono = paramValidator.validateQueryParamsAndGet(serverRequest, DistrictParam.class).map(Map.Entry::getKey);
 
-    Mono<DistrictParam> params = paramValidator.validateAndGet(RestServerUtils.extractQueryParamsAsMap(serverRequest), DistrictParam.class);
-
-    Flux<DistrictEntity> response = paramValidator.validateAndGet(headers, DefaultHeaders.class)
-        .zipWith(params)
-        .flatMapMany(tuple -> districtService.findByProvinceIdAndDepartmentId(tuple.getT2().getProvinceId(), tuple.getT2().getDepartmentId()));
+    Flux<DistrictEntity> response = paramValidator.validateHeadersAndGet(serverRequest, DefaultHeaders.class)
+        .zipWith(paramsMono)
+        .flatMapMany(tuple -> {
+          DistrictParam params = tuple.getT2();
+          return districtService.findByProvinceIdAndDepartmentId(params.getProvinceId(), params.getDepartmentId());
+        });
 
     return ServerResponse.ok()
         .headers(httpHeaders -> RestServerUtils.buildResponseHeaders(serverRequest.headers()).accept(httpHeaders))

@@ -24,14 +24,15 @@ public class UbigeoHandler {
   private final ParamValidator paramValidator;
 
   public Mono<ServerResponse> findUbigeo(ServerRequest serverRequest) {
-    Map<String, String> headers = RestServerUtils.extractHeadersAsMap(serverRequest);
+    Mono<UbigeoParam> paramsMono = paramValidator.validateQueryParamsAndGet(serverRequest, UbigeoParam.class).map(Map.Entry::getKey);
 
-    Mono<UbigeoParam> params = paramValidator.validateAndGet(RestServerUtils.extractQueryParamsAsMap(serverRequest), UbigeoParam.class);
-
-    return paramValidator.validateAndGet(headers, DefaultHeaders.class)
-        .zipWith(params)
-        .map(tuple -> tuple.getT2().getDepartmentId() + tuple.getT2().getProvinceId() + tuple.getT2().getDistrictId())
-        .flatMap(ubigeoService::findUbigeo)
+    return paramValidator.validateHeadersAndGet(serverRequest, DefaultHeaders.class)
+        .zipWith(paramsMono)
+        .flatMap(tuple -> {
+          UbigeoParam params = tuple.getT2();
+          String ubigeo = params.getDepartmentId() + params.getProvinceId() + params.getDistrictId();
+          return ubigeoService.findUbigeo(ubigeo);
+        })
         .flatMap(response -> ServerResponse.ok()
             .headers(httpHeaders -> RestServerUtils.buildResponseHeaders(serverRequest.headers()).accept(httpHeaders))
             .contentType(MediaType.APPLICATION_JSON)
