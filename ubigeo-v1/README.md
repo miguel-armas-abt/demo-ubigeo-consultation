@@ -1,75 +1,67 @@
+Reemplazar los siguientes valores donde corresponda:
 
-[← Regresar](../README.md) <br>
+| variable        | valor                          |
+|-----------------|--------------------------------|
+| `<APP_IMAGE>`   | `miguelarmasabt/ubigeo:v1.0.1` |
+| `<APP_PORTS>`   | `8080:8080`                    |
+| `<REDIS_IMAGE>` | `redis:7`                      |
 
----
-## 📋 Core library
-[🌐 Documentación](https://github.com/miguel-armas-abt/backend-core-library) <br>
-[🏷️ Versión](./src/main/java/com/demo/service/commons/core/package-info.java) <br>
+## ▶️ Local
 
----
-
-## ▶️ Despliegue local
-
-1. Generar el compilado
-```sh
-mvn clean install
-```
-
+1. Descargar e instalar [commons-webflux-parent](https://github.com/miguel-armas-abt/commons-webflux-parent/README.md)
 2. Configurar las [variables de entorno](./variables.env) en el IDE.
-
-2. Ejecutar aplicación
-
+3. Ejecutar aplicación
 
 ---
 
-## ▶️ Despliegue con Docker
+## ▶️ Docker
 
-⚙️ Crear imagen
+1. Crear imagen
 ```shell
-docker build -t miguelarmasabt/ubigeo:v1.0.1 -f ./Dockerfile .
+docker build -t <APP_IMAGE> -f ./Dockerfile .
 ```
 
-⚙️ Ejecutar contenedores
+2. Iniciar orquestación
 ```shell
 docker-compose -f ./docker-compose.yaml up -d
 ```
 
-⚙️ Eliminar orquestación
+3. Eliminar orquestación
 ```shell
 docker-compose -f ./docker-compose.yaml down -v
 ```
 
 ---
 
-## ▶️ Despliegue con Kubernetes
+## ▶️ Kubernetes
 
-⚙️ Encender Minikube
+1. Encender Minikube
 ```shell
 docker context use default
 minikube start
 ```
 
-⚙️ Crear imágenes
+2. Crear imágenes dentro del clúster
 ```shell
 eval $(minikube docker-env --shell bash)
-docker build -t miguelarmasabt/ubigeo:v1.0.1 -f ./Dockerfile .
-docker pull redis:7
+docker build -t <APP_IMAGE> -f ./Dockerfile .
+docker pull <REDIS_IMAGE>
 ```
 
-⚙️ Crear namespace y aplicar manifiestos
+3. Crear namespace y aplicar manifiestos
 ```shell
-kubectl create namespace poc
-kubectl apply -f ./k8s.yaml -n poc
-kubectl apply -f ./k8s-redis.yaml -n poc
+kubectl create namespace demo
+kubectl apply -f ./k8s.yaml -n demo
+kubectl apply -f ./k8s-redis.yaml -n demo
 ```
 
-⚙️ Eliminar orquestación
+4. Eliminar orquestación
 ```shell
-kubectl delete -f ./k8s.yaml -n poc
-kubectl delete -f ./k8s-redis.yaml -n poc
+kubectl delete -f ./k8s.yaml -n demo
+kubectl delete -f ./k8s-redis.yaml -n demo
 ```
 
-⚙️ Port-forward
+5. Port-forward
 ```shell
-kubectl port-forward <pod-id> 8080:8080 -n poc
+kubectl port-forward <POD_ID> <APP_PORTS> -n demo
 ```
